@@ -1,0 +1,29 @@
+name: smart-budget-openenv
+description: Expense classification environment for reinforcement learning agents.
+
+benchmark: smart-budget
+
+tasks:
+  - name: easy
+    description: classify 3 transactions
+
+  - name: medium
+    description: classify 4 transactions
+
+  - name: hard
+    description: classify 5 transactions
+
+observation_space:
+  merchant: string
+  amount: float
+  step: integer
+
+action_space:
+  category: string
+
+reward_range:
+  min: -1
+  max: 1
+
+end_condition:
+  when_transactions_finished: true
