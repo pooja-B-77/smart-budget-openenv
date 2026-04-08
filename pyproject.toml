@@ -2,9 +2,7 @@
 name = "smart-budget-openenv"
 version = "0.1.0"
 description = "OpenEnv environment for financial transaction classification"
-authors = [
-    {name = "Pooja"}
-]
+authors = [{name = "Pooja"}]
 readme = "README.md"
 requires-python = ">=3.10"
 
