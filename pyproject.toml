@@ -4,12 +4,17 @@ version = "0.1.0"
 description = "OpenEnv environment for financial transaction classification"
 readme = "README.md"
 requires-python = ">=3.10"
+
 dependencies = [
     "fastapi",
     "uvicorn",
     "pydantic",
-    "requests"
+    "requests",
+    "openenv-core>=0.2.0"
 ]
+
+[project.scripts]
+server = "server.app:main"
 
 [tool.openenv]
 env_module = "env.budget_env:SmartBudgetEnv"
