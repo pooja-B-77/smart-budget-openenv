@@ -6,10 +6,13 @@ class Observation(BaseModel):
     merchant: str
     amount: float
     step: int
+    remaining_transactions: int
+    valid_categories: list
 
 
 class Action(BaseModel):
     category: str
+    reasoning: str | None = None
 
 
 class Reward(BaseModel):
@@ -27,26 +30,42 @@ VALID_CATEGORIES = [
 TASKS = {
     "easy": [
         {"merchant": "Amazon", "amount": 900, "category": "shopping"},
+        {"merchant": "Flipkart", "amount": 1100, "category": "shopping"},
         {"merchant": "Swiggy", "amount": 250, "category": "food"},
+        {"merchant": "Zomato", "amount": 320, "category": "food"},
         {"merchant": "Uber", "amount": 180, "category": "transport"},
     ],
 
     "medium": [
         {"merchant": "Amazon", "amount": 1200, "category": "shopping"},
+        {"merchant": "Myntra", "amount": 1400, "category": "shopping"},
         {"merchant": "Dominos", "amount": 500, "category": "food"},
+        {"merchant": "KFC", "amount": 420, "category": "food"},
         {"merchant": "Uber", "amount": 350, "category": "transport"},
+        {"merchant": "Ola", "amount": 300, "category": "transport"},
         {"merchant": "Netflix", "amount": 650, "category": "entertainment"},
     ],
 
     "hard": [
         {"merchant": "Amazon", "amount": 1500, "category": "shopping"},
+        {"merchant": "Flipkart", "amount": 1350, "category": "shopping"},
+        {"merchant": "BigBazaar", "amount": 800, "category": "shopping"},
+        {"merchant": "RelianceMart", "amount": 950, "category": "shopping"},
+
         {"merchant": "Zomato", "amount": 450, "category": "food"},
-        {"merchant": "Uber", "amount": 320, "category": "transport"},
-        {"merchant": "Spotify", "amount": 199, "category": "entertainment"},
         {"merchant": "Swiggy", "amount": 600, "category": "food"},
+        {"merchant": "Dominos", "amount": 500, "category": "food"},
+        {"merchant": "Starbucks", "amount": 350, "category": "food"},
+
+        {"merchant": "Uber", "amount": 320, "category": "transport"},
+        {"merchant": "Ola", "amount": 280, "category": "transport"},
+        {"merchant": "Rapido", "amount": 190, "category": "transport"},
+
+        {"merchant": "Netflix", "amount": 199, "category": "entertainment"},
+        {"merchant": "Spotify", "amount": 119, "category": "entertainment"},
+        {"merchant": "PrimeVideo", "amount": 299, "category": "entertainment"},
     ]
 }
-
 
 class SmartBudgetEnv:
 
@@ -56,20 +75,27 @@ class SmartBudgetEnv:
         self.transactions = []
         self.step_id = 0
         self.done = False
+        self.total_reward = 0
 
     def reset(self):
 
-        self.transactions = TASKS[self.task]
+        self.transactions = TASKS[self.task].copy()
+
+        # shuffle transactions to prevent memorization
+        random.shuffle(self.transactions)
 
         self.step_id = 0
         self.done = False
+        self.total_reward = 0
 
         t = self.transactions[self.step_id]
 
         return Observation(
             merchant=t["merchant"],
             amount=t["amount"],
-            step=self.step_id
+            step=self.step_id,
+            remaining_transactions=len(self.transactions),
+            valid_categories=VALID_CATEGORIES
         )
 
     def state(self):
@@ -82,28 +108,62 @@ class SmartBudgetEnv:
         return Observation(
             merchant=t["merchant"],
             amount=t["amount"],
-            step=self.step_id
+            step=self.step_id,
+            remaining_transactions=len(self.transactions) - self.step_id,
+            valid_categories=VALID_CATEGORIES
         )
 
     def step(self, action: dict):
 
         correct = self.transactions[self.step_id]["category"]
-
         predicted = action.get("category", "")
+        reasoning = action.get("reasoning", "")
 
+        reward = 0
+
+        # main reward logic
         if predicted == correct:
-            reward = 1.0
+            reward = 1.5
 
         elif predicted in VALID_CATEGORIES:
-            reward = 0.5
+            reward = 0.3
 
         else:
-            reward = -0.2
+            reward = -0.5
+
+        # reasoning bonus
+        if reasoning:
+
+            reasoning = reasoning.lower()
+            merchant = self.transactions[self.step_id]["merchant"].lower()
+
+            if merchant in reasoning:
+                reward += 0.2
+
+        # amount-based reward shaping
+        amount = self.transactions[self.step_id]["amount"]
+
+        if predicted == correct and amount > 1000:
+            reward += 0.5
+
+        self.total_reward += reward
 
         self.step_id += 1
 
+        # episode finished
         if self.step_id >= len(self.transactions):
+
             self.done = True
+
+            accuracy = self.total_reward / len(self.transactions)
+
+            # performance bonus
+            if accuracy > 1:
+                reward += 2
+
+            elif accuracy < 0.5:
+                reward -= 1
+
             return None, reward, True
 
         next_state = self.transactions[self.step_id]
@@ -111,7 +171,9 @@ class SmartBudgetEnv:
         obs = Observation(
             merchant=next_state["merchant"],
             amount=next_state["amount"],
-            step=self.step_id
+            step=self.step_id,
+            remaining_transactions=len(self.transactions) - self.step_id,
+            valid_categories=VALID_CATEGORIES
         )
 
         return obs, reward, False

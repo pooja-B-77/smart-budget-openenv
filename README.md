@@ -1,4 +1,5 @@
 ---
+
 title: Smart Budget OpenEnv
 emoji: 💰
 colorFrom: yellow
@@ -6,50 +7,52 @@ colorTo: blue
 sdk: docker
 pinned: false
 short_description: OpenEnv environment for financial transaction classification
----
+-------------------------------------------------------------------------------
 
 # Smart Budget OpenEnv
 
-A reinforcement learning environment for **financial transaction classification**.
+Smart Budget OpenEnv is an **agent evaluation environment** where AI agents classify financial transactions into budget categories.
 
-Agents must classify real-world expense transactions into appropriate budget categories.
+The environment simulates a real-world personal finance scenario where users categorize bank transactions such as purchases, subscriptions, or ride payments.
 
-This environment simulates a **common personal finance task**: automatically categorizing spending from merchants such as Amazon, Uber, or Swiggy.
+Agents receive observations about each transaction and must predict the correct spending category.
 
-Built using the **OpenEnv specification** for evaluating agentic systems.
+The environment rewards correct classifications and penalizes incorrect predictions.
 
 ---
 
 # Environment Motivation
 
-People frequently review bank transactions and categorize them into budgets such as:
+Many financial tools automatically categorize transactions for budgeting and analytics.
 
-• food  
-• shopping  
-• transport  
-• entertainment  
+Examples include:
 
-This environment allows an AI agent to perform that task automatically and receive feedback through a reward signal.
+• expense tracking apps
+• banking dashboards
+• financial assistants
+• fraud monitoring tools
+
+This environment simulates that task and allows **AI agents to learn and evaluate transaction classification behavior**.
 
 ---
 
 # Observation Space
 
-The environment provides the following observation at each step:
+At each step the agent receives the following observation:
 
-| Field | Type | Description |
-|------|------|-------------|
-| merchant | string | Merchant name |
-| amount | float | Transaction amount |
-| step | integer | Current step number |
+| Field    | Type    | Description               |
+| -------- | ------- | ------------------------- |
+| merchant | string  | Merchant name             |
+| amount   | float   | Transaction amount        |
+| step     | integer | Current transaction index |
 
-Example:
+Example observation:
 
 ```json
 {
  "merchant": "Amazon",
  "amount": 900,
- "step": 1
+ "step": 0
 }
 ```
 
@@ -57,18 +60,18 @@ Example:
 
 # Action Space
 
-The agent must predict a category.
+The agent must predict the transaction category.
 
-| Field | Type | Description |
-|------|------|-------------|
+| Field    | Type   | Description                |
+| -------- | ------ | -------------------------- |
 | category | string | Predicted expense category |
 
 Allowed categories:
 
-• food  
-• shopping  
-• transport  
-• entertainment  
+• shopping
+• food
+• transport
+• entertainment
 
 Example action:
 
@@ -82,45 +85,63 @@ Example action:
 
 # Reward Function
 
-The reward gives feedback based on prediction quality.
+The environment provides feedback based on prediction quality.
 
-| Prediction | Reward |
-|-----------|-------|
-| Correct classification | +1.0 |
-| Valid category but wrong | +0.5 |
-| Invalid category | -0.2 |
+| Prediction                   | Reward |
+| ---------------------------- | ------ |
+| Correct classification       | +1.0   |
+| Valid category but incorrect | +0.5   |
+| Invalid category             | -0.2   |
 
-This reward shaping allows agents to improve performance over time.
+This reward structure encourages agents to learn accurate transaction classification.
 
 ---
 
 # Tasks
 
-The environment contains **three difficulty levels**.
+The environment contains **three difficulty levels**:
 
-| Task | Transactions | Description |
-|-----|-------------|-------------|
-| easy | 3 | Simple merchant names |
-| medium | 4 | Slightly ambiguous merchants |
-| hard | 5 | Mixed merchant types |
+| Task   | Transactions | Description                |
+| ------ | ------------ | -------------------------- |
+| easy   | 3            | Clear merchant names       |
+| medium | 4            | More diverse merchants     |
+| hard   | 5            | Mixed transaction patterns |
 
-These tasks allow benchmarking agents across increasing difficulty levels.
+These tasks help evaluate how well agents generalize across different transaction scenarios.
 
 ---
+# Merchant Coverage
 
+The environment includes merchants from common spending categories:
+
+Shopping:
+Amazon, Flipkart, Myntra, BigBazaar
+
+Food:
+Swiggy, Zomato, Dominos, KFC, Starbucks
+
+Transport:
+Uber, Ola, Rapido
+
+Entertainment:
+Netflix, Spotify, PrimeVideo
+
+This diverse merchant coverage allows agents to reason about transaction categories from real-world brand signals.
+
+---
 # Environment API
 
-### Reset Environment
+## Reset Environment
 
 ```
 POST /reset
 ```
 
-Returns the initial observation.
+Returns the first observation of a new episode.
 
 ---
 
-### Step
+## Step
 
 ```
 POST /step
@@ -154,13 +175,13 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Run the environment:
+Run the API server:
 
 ```
 python -m uvicorn server.app:app --reload
 ```
 
-Open:
+Open the interactive API docs:
 
 ```
 http://127.0.0.1:8000/docs
@@ -170,7 +191,7 @@ http://127.0.0.1:8000/docs
 
 # Baseline Agent
 
-Run the baseline:
+Run the baseline agent:
 
 ```
 python inference.py
@@ -179,11 +200,11 @@ python inference.py
 Example output:
 
 ```
-[START] task=easy env=smart-budget model=baseline
-[STEP] step=1 reward=0.50
-[STEP] step=2 reward=0.50
-[STEP] step=3 reward=1.00
-[END] success=true score=0.67
+[START] task=auto env=smart-budget model=baseline
+[STEP] step=1 merchant=Amazon action=shopping reward=1.00 done=false
+[STEP] step=2 merchant=Swiggy action=food reward=1.00 done=false
+[STEP] step=3 merchant=Uber action=transport reward=1.00 done=true
+[END] success=true steps=3 score=1.00 rewards=1.0,1.0,1.0
 ```
 
 ---
@@ -202,7 +223,7 @@ Run container:
 docker run -p 7860:7860 smart-budget
 ```
 
-Open:
+Open API docs:
 
 ```
 http://localhost:7860/docs
@@ -218,22 +239,10 @@ Environment specification is defined in:
 openenv.yaml
 ```
 
-Validate locally:
+Validate locally using:
 
 ```
 openenv validate
-```
-
----
-
-# HuggingFace Deployment
-
-This environment runs as a **Docker HuggingFace Space**.
-
-After deployment:
-
-```
-https://<your-space>.hf.space/docs
 ```
 
 ---
@@ -260,12 +269,12 @@ smart-budget-openenv
 
 # Use Cases
 
-This environment can evaluate:
+This environment can be used to evaluate:
 
-• LLM agents  
-• Reinforcement learning agents  
-• Financial automation systems  
-• Autonomous budgeting tools  
+• LLM agents
+• reinforcement learning agents
+• financial automation systems
+• budgeting assistants
 
 ---
 

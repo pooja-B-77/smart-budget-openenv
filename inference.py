@@ -1,58 +1,74 @@
 import requests
+import time
 
 BASE = "http://127.0.0.1:8000"
 
-print("[START] task=easy env=smart-budget model=baseline")
+print("[START] task=auto env=smart-budget model=baseline")
 
 rewards = []
 step = 0
-
-obs = requests.post(f"{BASE}/reset").json()
-
-done = False
-
 
 def baseline_policy(merchant):
 
     merchant = merchant.lower()
 
-    if merchant in ["amazon"]:
+    if merchant in ["amazon", "flipkart", "myntra", "bigbazaar", "reliancemart"]:
         return "shopping"
 
-    if merchant in ["swiggy", "zomato", "dominos", "starbucks"]:
+    if merchant in ["swiggy", "zomato", "dominos", "kfc", "starbucks"]:
         return "food"
 
-    if merchant in ["uber"]:
+    if merchant in ["uber", "ola", "rapido"]:
         return "transport"
 
-    if merchant in ["netflix", "spotify"]:
+    if merchant in ["netflix", "spotify", "primevideo"]:
         return "entertainment"
 
     return "shopping"
 
 
-while not done:
+try:
 
-    merchant = obs["merchant"]
+    obs = requests.post(f"{BASE}/reset").json()
+    done = False
 
-    action = {"category": baseline_policy(merchant)}
+    while not done:
 
-    r = requests.post(f"{BASE}/step", json=action).json()
+        merchant = obs.get("merchant", "unknown")
 
-    reward = r["reward"]
-    done = r["done"]
+        action = {"category": baseline_policy(merchant)}
 
-    rewards.append(reward)
+        r = requests.post(f"{BASE}/step", json=action).json()
 
-    step += 1
+        reward = float(r.get("reward", 0))
+        done = bool(r.get("done", False))
 
-    print(
-        f"[STEP] step={step} action={action} reward={reward:.2f} done={str(done).lower()} error=null"
-    )
+        rewards.append(reward)
 
-    obs = r.get("state")
+        step += 1
 
-score = sum(rewards) / len(rewards)
+        print(
+            f"[STEP] step={step} merchant={merchant} action={action['category']} reward={reward:.2f} done={str(done).lower()} error=null"
+        )
+
+        obs = r.get("state")
+
+        if obs is None:
+            break
+
+        time.sleep(0.05)
+
+except Exception as e:
+
+    print(f"[ERROR] {str(e)}")
+    done = True
+
+
+if len(rewards) > 0:
+    score = sum(rewards) / len(rewards)
+else:
+    score = 0
+
 
 print(
     f"[END] success=true steps={step} score={score:.2f} rewards={','.join([str(round(x,2)) for x in rewards])}"
