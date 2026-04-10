@@ -67,6 +67,28 @@ TASKS = {
     ]
 }
 
+MERCHANT_HINTS = {
+    "Amazon": "online shopping marketplace",
+    "Flipkart": "ecommerce shopping platform",
+    "Myntra": "online fashion shopping",
+    "BigBazaar": "supermarket retail store",
+    "RelianceMart": "grocery and retail store",
+
+    "Swiggy": "food delivery service",
+    "Zomato": "restaurant food delivery platform",
+    "Dominos": "pizza restaurant",
+    "KFC": "fast food restaurant",
+    "Starbucks": "coffee shop",
+
+    "Uber": "ride hailing transport service",
+    "Ola": "taxi ride service",
+    "Rapido": "bike taxi service",
+
+    "Netflix": "video streaming subscription",
+    "Spotify": "music streaming service",
+    "PrimeVideo": "video streaming subscription"
+}
+
 class SmartBudgetEnv:
 
     def __init__(self, task="easy"):
