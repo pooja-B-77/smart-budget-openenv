@@ -1,32 +1,49 @@
+import os
 import requests
 import time
-import sys
+from openai import OpenAI
 
-BASE = "http://127.0.0.1:7860"   # HF/OpenEnv uses 7860
+BASE = "http://127.0.0.1:7860"
 
-print("[START] task=auto env=smart-budget model=baseline")
+print("[START] task=auto env=smart-budget model=llm-agent")
 
 rewards = []
 step = 0
 
+# initialize LLM client using hackathon proxy
+client = OpenAI(
+    base_url=os.environ["API_BASE_URL"],
+    api_key=os.environ["API_KEY"],
+)
 
-def baseline_policy(merchant):
+def llm_policy(merchant, amount):
 
-    merchant = merchant.lower()
+    prompt = f"""
+A financial transaction occurred.
 
-    if merchant in ["amazon","flipkart","myntra","bigbazaar","reliancemart"]:
+Merchant: {merchant}
+Amount: {amount}
+
+Choose the correct spending category from:
+shopping, food, transport, entertainment.
+
+Respond with only the category name.
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model="openai/gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0
+        )
+
+        category = response.choices[0].message.content.strip().lower()
+
+        return category
+
+    except Exception as e:
+        print("[LLM ERROR]", e)
         return "shopping"
-
-    if merchant in ["swiggy","zomato","dominos","kfc","starbucks"]:
-        return "food"
-
-    if merchant in ["uber","ola","rapido"]:
-        return "transport"
-
-    if merchant in ["netflix","spotify","primevideo"]:
-        return "entertainment"
-
-    return "shopping"
 
 
 def wait_for_server():
@@ -36,7 +53,7 @@ def wait_for_server():
             r = requests.get(BASE + "/")
             if r.status_code == 200:
                 return True
-        except Exception:
+        except:
             pass
 
         time.sleep(1)
@@ -46,63 +63,53 @@ def wait_for_server():
 
 if not wait_for_server():
     print("[ERROR] server not reachable")
-    sys.exit(0)
+    exit(0)
 
 
 try:
 
-    r = requests.post(BASE + "/reset")
-
-    if r.status_code != 200:
-        print("[ERROR] reset failed")
-        sys.exit(0)
-
-    obs = r.json()
+    obs = requests.post(BASE + "/reset").json()
     done = False
 
     while not done:
 
-        if not obs:
-            break
+        merchant = obs.get("merchant", "unknown")
+        amount = obs.get("amount", 0)
 
-        merchant = obs.get("merchant","unknown")
+        category = llm_policy(merchant, amount)
 
         action = {
-            "category": baseline_policy(merchant),
-            "reasoning": f"{merchant} transaction classification"
+            "category": category,
+            "reasoning": f"{merchant} transaction"
         }
 
-        try:
-            r = requests.post(BASE + "/step", json=action)
-            data = r.json()
-        except Exception:
-            print("[ERROR] step request failed")
-            break
+        r = requests.post(BASE + "/step", json=action).json()
 
-        reward = float(data.get("reward",0))
-        done = bool(data.get("done",False))
+        reward = float(r.get("reward", 0))
+        done = bool(r.get("done", False))
 
         rewards.append(reward)
         step += 1
 
         print(
-            f"[STEP] step={step} merchant={merchant} action={action['category']} reward={reward:.2f} done={str(done).lower()}"
+            f"[STEP] step={step} merchant={merchant} action={category} reward={reward:.2f} done={str(done).lower()}"
         )
 
-        obs = data.get("state")
+        obs = r.get("state")
 
-        time.sleep(0.05)
+        if obs is None:
+            break
+
+        time.sleep(0.1)
 
 except Exception as e:
 
     print("[ERROR]", str(e))
-    sys.exit(0)
+    exit(0)
 
 
-score = sum(rewards)/len(rewards) if rewards else 0
+score = sum(rewards) / len(rewards) if rewards else 0
 
 print(
     f"[END] success=true steps={step} score={score:.2f}"
 )
-
-sys.exit(0)
