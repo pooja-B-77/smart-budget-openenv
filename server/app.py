@@ -4,7 +4,6 @@ import uvicorn
 
 from env.budget_env import SmartBudgetEnv
 
-
 app = FastAPI()
 
 env = SmartBudgetEnv()
@@ -12,6 +11,7 @@ env = SmartBudgetEnv()
 
 class Action(BaseModel):
     category: str
+    reasoning: str | None = None
 
 
 @app.post("/reset")
@@ -33,12 +33,15 @@ def step(action: Action):
 
     return {
         "state": state.dict() if state else None,
-        "reward": reward,
-        "done": done
+        "reward": float(reward),
+        "done": bool(done)
     }
 
 
-# ---------- ENTRYPOINT REQUIRED BY OPENENV ----------
+@app.get("/")
+def health():
+    return {"status": "ok"}
+
 
 def main():
     uvicorn.run(app, host="0.0.0.0", port=7860)

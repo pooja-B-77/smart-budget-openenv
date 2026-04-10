@@ -5,6 +5,7 @@ import random
 class Observation(BaseModel):
     merchant: str
     amount: float
+    merchant_hint: str
     step: int
     remaining_transactions: int
     valid_categories: list
@@ -67,6 +68,7 @@ TASKS = {
     ]
 }
 
+
 MERCHANT_HINTS = {
     "Amazon": "online shopping marketplace",
     "Flipkart": "ecommerce shopping platform",
@@ -89,6 +91,7 @@ MERCHANT_HINTS = {
     "PrimeVideo": "video streaming subscription"
 }
 
+
 class SmartBudgetEnv:
 
     def __init__(self, task="easy"):
@@ -103,7 +106,6 @@ class SmartBudgetEnv:
 
         self.transactions = TASKS[self.task].copy()
 
-        # shuffle transactions to prevent memorization
         random.shuffle(self.transactions)
 
         self.step_id = 0
@@ -112,9 +114,12 @@ class SmartBudgetEnv:
 
         t = self.transactions[self.step_id]
 
+        hint = MERCHANT_HINTS.get(t["merchant"], "unknown merchant")
+
         return Observation(
             merchant=t["merchant"],
             amount=t["amount"],
+            merchant_hint=hint,
             step=self.step_id,
             remaining_transactions=len(self.transactions),
             valid_categories=VALID_CATEGORIES
@@ -127,9 +132,12 @@ class SmartBudgetEnv:
 
         t = self.transactions[self.step_id]
 
+        hint = MERCHANT_HINTS.get(t["merchant"], "unknown merchant")
+
         return Observation(
             merchant=t["merchant"],
             amount=t["amount"],
+            merchant_hint=hint,
             step=self.step_id,
             remaining_transactions=len(self.transactions) - self.step_id,
             valid_categories=VALID_CATEGORIES
@@ -143,17 +151,13 @@ class SmartBudgetEnv:
 
         reward = 0
 
-        # main reward logic
         if predicted == correct:
             reward = 1.5
-
         elif predicted in VALID_CATEGORIES:
             reward = 0.3
-
         else:
             reward = -0.5
 
-        # reasoning bonus
         if reasoning:
 
             reasoning = reasoning.lower()
@@ -162,7 +166,6 @@ class SmartBudgetEnv:
             if merchant in reasoning:
                 reward += 0.2
 
-        # amount-based reward shaping
         amount = self.transactions[self.step_id]["amount"]
 
         if predicted == correct and amount > 1000:
@@ -172,17 +175,14 @@ class SmartBudgetEnv:
 
         self.step_id += 1
 
-        # episode finished
         if self.step_id >= len(self.transactions):
 
             self.done = True
 
             accuracy = self.total_reward / len(self.transactions)
 
-            # performance bonus
             if accuracy > 1:
                 reward += 2
-
             elif accuracy < 0.5:
                 reward -= 1
 
@@ -190,9 +190,12 @@ class SmartBudgetEnv:
 
         next_state = self.transactions[self.step_id]
 
+        hint = MERCHANT_HINTS.get(next_state["merchant"], "unknown merchant")
+
         obs = Observation(
             merchant=next_state["merchant"],
             amount=next_state["amount"],
+            merchant_hint=hint,
             step=self.step_id,
             remaining_transactions=len(self.transactions) - self.step_id,
             valid_categories=VALID_CATEGORIES
