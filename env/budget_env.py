@@ -48,24 +48,25 @@ TASKS = {
     ],
 
     "hard": [
-        {"merchant": "Amazon", "amount": 1500, "category": "shopping"},
-        {"merchant": "Flipkart", "amount": 1350, "category": "shopping"},
-        {"merchant": "BigBazaar", "amount": 800, "category": "shopping"},
-        {"merchant": "RelianceMart", "amount": 950, "category": "shopping"},
 
-        {"merchant": "Zomato", "amount": 450, "category": "food"},
-        {"merchant": "Swiggy", "amount": 600, "category": "food"},
-        {"merchant": "Dominos", "amount": 500, "category": "food"},
-        {"merchant": "Starbucks", "amount": 350, "category": "food"},
+    {"merchant": "RelianceMart", "amount": 950, "category": "shopping"},
+    {"merchant": "BigBazaar", "amount": 800, "category": "shopping"},
 
-        {"merchant": "Uber", "amount": 320, "category": "transport"},
-        {"merchant": "Ola", "amount": 280, "category": "transport"},
-        {"merchant": "Rapido", "amount": 190, "category": "transport"},
+    {"merchant": "Starbucks", "amount": 350, "category": "food"},
+    {"merchant": "Dominos", "amount": 420, "category": "food"},
 
-        {"merchant": "Netflix", "amount": 199, "category": "entertainment"},
-        {"merchant": "Spotify", "amount": 119, "category": "entertainment"},
-        {"merchant": "PrimeVideo", "amount": 299, "category": "entertainment"},
-    ]
+    {"merchant": "Uber", "amount": 320, "category": "transport"},
+    {"merchant": "Rapido", "amount": 190, "category": "transport"},
+
+    {"merchant": "Netflix", "amount": 199, "category": "entertainment"},
+    {"merchant": "Spotify", "amount": 119, "category": "entertainment"},
+
+    {"merchant": "Apple", "amount": 45000, "category": "shopping"},
+    {"merchant": "Apple", "amount": 120, "category": "entertainment"},
+
+    {"merchant": "Amazon", "amount": 300, "category": "entertainment"},
+    {"merchant": "Amazon", "amount": 2500, "category": "shopping"},
+]
 }
 
 

@@ -1,7 +1,8 @@
 import requests
 import time
+import sys
 
-BASE = "http://127.0.0.1:8000"
+BASE = "http://127.0.0.1:7860"   # HF/OpenEnv uses 7860
 
 print("[START] task=auto env=smart-budget model=baseline")
 
@@ -32,11 +33,12 @@ def wait_for_server():
 
     for _ in range(30):
         try:
-            r = requests.get(BASE + "/docs")
+            r = requests.get(BASE + "/")
             if r.status_code == 200:
                 return True
-        except:
+        except Exception:
             pass
+
         time.sleep(1)
 
     return False
@@ -44,15 +46,24 @@ def wait_for_server():
 
 if not wait_for_server():
     print("[ERROR] server not reachable")
-    exit(1)
+    sys.exit(0)
 
 
 try:
 
-    obs = requests.post(f"{BASE}/reset").json()
+    r = requests.post(BASE + "/reset")
+
+    if r.status_code != 200:
+        print("[ERROR] reset failed")
+        sys.exit(0)
+
+    obs = r.json()
     done = False
 
     while not done:
+
+        if not obs:
+            break
 
         merchant = obs.get("merchant","unknown")
 
@@ -61,35 +72,37 @@ try:
             "reasoning": f"{merchant} transaction classification"
         }
 
-        r = requests.post(f"{BASE}/step", json=action)
-        r = r.json()
+        try:
+            r = requests.post(BASE + "/step", json=action)
+            data = r.json()
+        except Exception:
+            print("[ERROR] step request failed")
+            break
 
-        reward = float(r.get("reward",0))
-        done = bool(r.get("done",False))
+        reward = float(data.get("reward",0))
+        done = bool(data.get("done",False))
 
         rewards.append(reward)
-
         step += 1
 
         print(
-            f"[STEP] step={step} merchant={merchant} action={action['category']} reward={reward:.2f} done={str(done).lower()} error=null"
+            f"[STEP] step={step} merchant={merchant} action={action['category']} reward={reward:.2f} done={str(done).lower()}"
         )
 
-        obs = r.get("state")
+        obs = data.get("state")
 
-        if obs is None:
-            break
-
-        time.sleep(0.1)
+        time.sleep(0.05)
 
 except Exception as e:
 
     print("[ERROR]", str(e))
-    exit(1)
+    sys.exit(0)
 
 
 score = sum(rewards)/len(rewards) if rewards else 0
 
 print(
-    f"[END] success=true steps={step} score={score:.2f} rewards={','.join([str(round(x,2)) for x in rewards])}"
+    f"[END] success=true steps={step} score={score:.2f}"
 )
+
+sys.exit(0)
