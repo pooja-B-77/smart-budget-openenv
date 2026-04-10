@@ -5,25 +5,29 @@ benchmark: smart-budget
 
 tasks:
   - name: easy
-    description: classify 3 transactions
+    description: classify transactions with clear merchant names
 
   - name: medium
-    description: classify 4 transactions
+    description: classify transactions with diverse merchants
 
   - name: hard
-    description: classify 5 transactions
+    description: classify transactions with ambiguous merchants and mixed contexts
 
 observation_space:
   merchant: string
   amount: float
+  merchant_hint: string
   step: integer
+  remaining_transactions: integer
+  valid_categories: list
 
 action_space:
   category: string
+  reasoning: string
 
 reward_range:
   min: -1
-  max: 1
+  max: 2
 
 end_condition:
   when_transactions_finished: true
