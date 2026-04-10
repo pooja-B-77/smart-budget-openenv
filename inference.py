@@ -10,24 +10,34 @@ print("[START] task=auto env=smart-budget model=llm-agent")
 rewards = []
 step = 0
 
-# initialize LLM client using hackathon proxy
+VALID_CATEGORIES = ["shopping", "food", "transport", "entertainment"]
+
+# Initialize LLM client using hackathon proxy
 client = OpenAI(
-    base_url=os.environ["API_BASE_URL"],
-    api_key=os.environ["API_KEY"],
+    base_url=os.environ.get("API_BASE_URL"),
+    api_key=os.environ.get("API_KEY"),
 )
+
 
 def llm_policy(merchant, amount):
 
     prompt = f"""
-A financial transaction occurred.
+You are a financial assistant that classifies bank transactions.
 
+Choose the correct category from:
+shopping, food, transport, entertainment.
+
+Examples:
+Amazon, Flipkart, Myntra -> shopping
+Swiggy, Zomato, Dominos -> food
+Uber, Ola, Rapido -> transport
+Netflix, Spotify, PrimeVideo -> entertainment
+
+Transaction:
 Merchant: {merchant}
 Amount: {amount}
 
-Choose the correct spending category from:
-shopping, food, transport, entertainment.
-
-Respond with only the category name.
+Return ONLY the category name.
 """
 
     try:
@@ -38,6 +48,13 @@ Respond with only the category name.
         )
 
         category = response.choices[0].message.content.strip().lower()
+        for c in VALID_CATEGORIES:
+            if c in category:
+                return c
+
+        # Ensure valid output
+        if category not in VALID_CATEGORIES:
+            return "shopping"
 
         return category
 
@@ -53,7 +70,7 @@ def wait_for_server():
             r = requests.get(BASE + "/")
             if r.status_code == 200:
                 return True
-        except:
+        except Exception:
             pass
 
         time.sleep(1)
@@ -68,10 +85,19 @@ if not wait_for_server():
 
 try:
 
-    obs = requests.post(BASE + "/reset").json()
+    r = requests.post(BASE + "/reset")
+
+    if r.status_code != 200:
+        print("[ERROR] reset failed")
+        exit(0)
+
+    obs = r.json()
     done = False
 
     while not done:
+
+        if not obs:
+            break
 
         merchant = obs.get("merchant", "unknown")
         amount = obs.get("amount", 0)
@@ -80,13 +106,18 @@ try:
 
         action = {
             "category": category,
-            "reasoning": f"{merchant} transaction"
+            "reasoning": f"{merchant} transaction classification"
         }
 
-        r = requests.post(BASE + "/step", json=action).json()
+        try:
+            r = requests.post(BASE + "/step", json=action)
+            data = r.json()
+        except Exception:
+            print("[ERROR] step request failed")
+            break
 
-        reward = float(r.get("reward", 0))
-        done = bool(r.get("done", False))
+        reward = float(data.get("reward", 0))
+        done = bool(data.get("done", False))
 
         rewards.append(reward)
         step += 1
@@ -95,12 +126,12 @@ try:
             f"[STEP] step={step} merchant={merchant} action={category} reward={reward:.2f} done={str(done).lower()}"
         )
 
-        obs = r.get("state")
+        obs = data.get("state")
 
         if obs is None:
             break
 
-        time.sleep(0.1)
+        time.sleep(0.05)
 
 except Exception as e:
 
@@ -110,6 +141,4 @@ except Exception as e:
 
 score = sum(rewards) / len(rewards) if rewards else 0
 
-print(
-    f"[END] success=true steps={step} score={score:.2f}"
-)
+print(f"[END] success=true steps={step} score={score:.2f}")
