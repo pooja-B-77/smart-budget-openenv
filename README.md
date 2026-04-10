@@ -1,3 +1,4 @@
+---
 title: Smart Budget OpenEnv
 emoji: 💰
 colorFrom: yellow
@@ -5,6 +6,7 @@ colorTo: blue
 sdk: docker
 pinned: false
 short_description: OpenEnv environment for financial transaction classification
+---
 
 # Smart Budget OpenEnv
 
