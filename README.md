@@ -8,7 +8,7 @@ sdk: docker
 app_port: 7860
 pinned: false
 short_description: OpenEnv environment for financial transaction classification
--------------------------------------------------------------------------------
+
 
 # Smart Budget OpenEnv
 
