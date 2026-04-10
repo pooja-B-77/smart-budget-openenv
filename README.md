@@ -107,31 +107,31 @@ The environment contains **three difficulty levels**:
 | medium | 4            | More diverse merchants     |
 | hard   | 5            | Mixed transaction patterns |
 
-These tasks help evaluate how well agents generalize across different transaction scenarios.
-
 ---
+
 # Merchant Coverage
 
-The environment includes merchants from common spending categories:
+The environment includes merchants from common spending categories.
 
-Shopping:
+Shopping
 Amazon, Flipkart, Myntra, BigBazaar
 
-Food:
+Food
 Swiggy, Zomato, Dominos, KFC, Starbucks
 
-Transport:
+Transport
 Uber, Ola, Rapido
 
-Entertainment:
+Entertainment
 Netflix, Spotify, PrimeVideo
 
 This diverse merchant coverage allows agents to reason about transaction categories from real-world brand signals.
 
 ---
+
 # Environment API
 
-## Reset Environment
+### Reset Environment
 
 ```
 POST /reset
@@ -141,7 +141,7 @@ Returns the first observation of a new episode.
 
 ---
 
-## Step
+### Step
 
 ```
 POST /step
@@ -181,7 +181,7 @@ Run the API server:
 python -m uvicorn server.app:app --reload
 ```
 
-Open the interactive API docs:
+Open the API docs:
 
 ```
 http://127.0.0.1:8000/docs
@@ -223,7 +223,7 @@ Run container:
 docker run -p 7860:7860 smart-budget
 ```
 
-Open API docs:
+Open:
 
 ```
 http://localhost:7860/docs
@@ -239,7 +239,7 @@ Environment specification is defined in:
 openenv.yaml
 ```
 
-Validate locally using:
+Validate locally:
 
 ```
 openenv validate
@@ -269,7 +269,7 @@ smart-budget-openenv
 
 # Use Cases
 
-This environment can be used to evaluate:
+This environment can evaluate:
 
 • LLM agents
 • reinforcement learning agents
