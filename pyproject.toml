@@ -19,6 +19,10 @@ easy = "tasks.easy.grader:grade"
 medium = "tasks.medium.grader:grade"
 hard = "tasks.hard.grader:grade"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["env*", "server*", "tasks*"]
+
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
