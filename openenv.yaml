@@ -1,8 +1,6 @@
 name: smart-budget-openenv
 description: Expense classification environment for reinforcement learning agents.
 
-benchmark: smart-budget
-
 tasks:
   easy:
     description: classify transactions with clear merchant names
