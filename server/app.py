@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pydantic import BaseModel
 import uvicorn
 
@@ -18,11 +18,10 @@ VALID_TASKS = ["easy", "medium", "hard"]
 
 
 @app.post("/reset")
-def reset(task: str | None = None):
+def reset(task: str = Query(default="easy")):
 
     global env
 
-    # validator may not provide task
     if task not in VALID_TASKS:
         task = "easy"
 
