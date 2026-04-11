@@ -4,24 +4,20 @@ description: Expense classification environment for reinforcement learning agent
 benchmark: smart-budget
 
 tasks:
-  - name: easy
+  easy:
     description: classify transactions with clear merchant names
     grader:
       type: reward_average
-      score_field: reward
 
-  - name: medium
+  medium:
     description: classify transactions with diverse merchants
     grader:
       type: reward_average
-      score_field: reward
 
-  - name: hard
+  hard:
     description: classify transactions with ambiguous merchants
     grader:
       type: reward_average
-      score_field: reward
-
 
 observation_space:
   merchant: string
@@ -29,17 +25,15 @@ observation_space:
   merchant_hint: string
   step: integer
   remaining_transactions: integer
-
+  valid_categories: list
 
 action_space:
   category: string
   reasoning: string
 
-
 reward_range:
   min: 0
   max: 1
-
 
 end_condition:
   when_transactions_finished: true
