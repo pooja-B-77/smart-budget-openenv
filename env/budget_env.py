@@ -70,7 +70,6 @@ class SmartBudgetEnv:
 
     def reset(self):
 
-        # load transactions for selected task
         self.transactions = TASKS[self.task].copy()
         random.shuffle(self.transactions)
 
@@ -119,14 +118,8 @@ class SmartBudgetEnv:
         self.step_id += 1
 
         if self.step_id >= len(self.transactions):
-
             self.done = True
-
-            score = self.correct / len(self.transactions)
-
-            # validator requires 0 < score < 1
-            score = max(0.05, min(score, 0.95))
-
-            return None, score, True
+            # IMPORTANT: return reward, not score
+            return None, reward, True
 
         return self._build_obs(), reward, False
