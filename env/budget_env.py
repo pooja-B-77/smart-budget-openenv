@@ -23,19 +23,15 @@ TASKS = {
 
     "easy": [
         {"merchant": "Amazon", "amount": 900, "category": "shopping"},
-        {"merchant": "Flipkart", "amount": 1100, "category": "shopping"},
         {"merchant": "Swiggy", "amount": 250, "category": "food"},
-        {"merchant": "Zomato", "amount": 320, "category": "food"},
         {"merchant": "Uber", "amount": 180, "category": "transport"},
     ],
 
     "medium": [
-        {"merchant": "Myntra", "amount": 1400, "category": "shopping"},
-        {"merchant": "Dominos", "amount": 500, "category": "food"},
-        {"merchant": "KFC", "amount": 420, "category": "food"},
+        {"merchant": "Flipkart", "amount": 1100, "category": "shopping"},
+        {"merchant": "Dominos", "amount": 420, "category": "food"},
         {"merchant": "Ola", "amount": 300, "category": "transport"},
         {"merchant": "Netflix", "amount": 650, "category": "entertainment"},
-        {"merchant": "Spotify", "amount": 119, "category": "entertainment"},
     ],
 
     "hard": [
@@ -51,38 +47,41 @@ TASKS = {
 MERCHANT_HINTS = {
     "Amazon": "online shopping marketplace",
     "Flipkart": "ecommerce shopping platform",
-    "Myntra": "online fashion shopping",
     "Swiggy": "food delivery service",
-    "Zomato": "restaurant food delivery platform",
     "Dominos": "pizza restaurant",
-    "KFC": "fast food restaurant",
     "Starbucks": "coffee shop",
     "Uber": "ride hailing transport service",
     "Ola": "taxi ride service",
     "Rapido": "bike taxi service",
     "Netflix": "video streaming subscription",
-    "Spotify": "music streaming service"
+    "Spotify": "music streaming service",
+    "RelianceMart": "retail store"
 }
 
 
 class SmartBudgetEnv:
 
-    def __init__(self, task="easy"):
+    def __init__(self):
 
-        self.task = task
+        self.task_list = ["easy", "medium", "hard"]
+        self.task_index = -1
         self.transactions = []
         self.step_id = 0
-        self.done = False
         self.correct = 0
+        self.done = False
 
     def reset(self):
 
-        self.transactions = TASKS[self.task].copy()
+        # rotate tasks each episode
+        self.task_index = (self.task_index + 1) % len(self.task_list)
+        task_name = self.task_list[self.task_index]
+
+        self.transactions = TASKS[task_name].copy()
         random.shuffle(self.transactions)
 
         self.step_id = 0
-        self.done = False
         self.correct = 0
+        self.done = False
 
         return self._build_obs()
 
@@ -96,7 +95,6 @@ class SmartBudgetEnv:
     def _build_obs(self):
 
         t = self.transactions[self.step_id]
-
         hint = MERCHANT_HINTS.get(t["merchant"], "unknown merchant")
 
         return Observation(
@@ -131,7 +129,7 @@ class SmartBudgetEnv:
 
             score = self.correct / len(self.transactions)
 
-            # ensure validator requirement (0,1)
+            # ensure validator requirement
             score = max(0.05, min(score, 0.95))
 
             return None, score, True
