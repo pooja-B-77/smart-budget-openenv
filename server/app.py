@@ -8,13 +8,12 @@ app = FastAPI()
 
 env = SmartBudgetEnv()
 
+VALID_TASKS = ["easy", "medium", "hard"]
+
 
 class Action(BaseModel):
     category: str
     reasoning: str | None = None
-
-
-VALID_TASKS = ["easy", "medium", "hard"]
 
 
 @app.post("/reset")
@@ -25,7 +24,7 @@ def reset(task: str = Query(default="easy")):
     if task not in VALID_TASKS:
         task = "easy"
 
-    env = SmartBudgetEnv(task=task)
+    env = SmartBudgetEnv(task)
 
     obs = env.reset()
 

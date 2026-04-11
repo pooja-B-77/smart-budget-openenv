@@ -8,7 +8,7 @@ class Observation(BaseModel):
     merchant_hint: str
     step: int
     remaining_transactions: int
-    valid_categories: list
+    valid_categories: list[str]
 
 
 VALID_CATEGORIES = [
@@ -89,7 +89,9 @@ class SmartBudgetEnv:
     def _build_obs(self):
 
         t = self.transactions[self.step_id]
-        hint = MERCHANT_HINTS.get(t["merchant"], "unknown merchant")
+
+        hint = MERCHANT_HINTS.get(
+            t["merchant"], "unknown merchant")
 
         return Observation(
             merchant=t["merchant"],
@@ -108,18 +110,17 @@ class SmartBudgetEnv:
         reward = 0.0
 
         if predicted == correct:
-            reward = 0.8
+            reward = 1.0
             self.correct += 1
         elif predicted in VALID_CATEGORIES:
-            reward = 0.4
+            reward = 0.5
         else:
-            reward = 0.2
+            reward = 0.1
 
         self.step_id += 1
 
         if self.step_id >= len(self.transactions):
             self.done = True
-            # IMPORTANT: return reward, not score
             return None, reward, True
 
         return self._build_obs(), reward, False

@@ -14,6 +14,11 @@ server = "server.app:main"
 [tool.openenv]
 env_module = "env.budget_env:SmartBudgetEnv"
 
+[project.entry-points.openenv_tasks]
+easy = "tasks.easy.grader:grade"
+medium = "tasks.medium.grader:grade"
+hard = "tasks.hard.grader:grade"
+
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
