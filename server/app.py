@@ -6,6 +6,7 @@ from env.budget_env import SmartBudgetEnv
 
 app = FastAPI()
 
+# default env
 env = SmartBudgetEnv()
 
 
@@ -15,14 +16,28 @@ class Action(BaseModel):
 
 
 @app.post("/reset")
-def reset():
+def reset(task: str = "easy"):
+    """
+    Reset environment.
+    Validator can choose tasks:
+    /reset?task=easy
+    /reset?task=medium
+    /reset?task=hard
+    """
+    global env
+
+    env = SmartBudgetEnv(task=task)
+
     obs = env.reset()
+
     return obs.dict()
 
 
 @app.get("/state")
 def state():
+
     obs = env.state()
+
     return obs.dict() if obs else None
 
 
