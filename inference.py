@@ -12,14 +12,40 @@ step = 0
 
 VALID_CATEGORIES = ["shopping", "food", "transport", "entertainment"]
 
-# Initialize LLM client using hackathon proxy
-client = OpenAI(
-    base_url=os.environ.get("API_BASE_URL"),
-    api_key=os.environ.get("API_KEY"),
-)
+# read hackathon proxy variables
+API_BASE = os.environ.get("API_BASE_URL")
+API_KEY = os.environ.get("API_KEY")
+
+client = None
+
+# initialize client only if variables exist
+if API_BASE and API_KEY:
+    client = OpenAI(
+        base_url=API_BASE,
+        api_key=API_KEY,
+    )
 
 
 def llm_policy(merchant, amount, hint):
+
+    # fallback classifier for local testing
+    if client is None:
+
+        m = merchant.lower()
+
+        if m in ["amazon", "flipkart", "myntra", "reliancemart"]:
+            return "shopping"
+
+        if m in ["swiggy", "zomato", "dominos", "kfc", "starbucks"]:
+            return "food"
+
+        if m in ["uber", "ola", "rapido"]:
+            return "transport"
+
+        if m in ["netflix", "spotify", "primevideo"]:
+            return "entertainment"
+
+        return "shopping"
 
     prompt = f"""
 You are a financial assistant that classifies bank transactions.
@@ -33,11 +59,12 @@ Swiggy, Zomato, Dominos -> food
 Uber, Ola, Rapido -> transport
 Netflix, Spotify, PrimeVideo -> entertainment
 
-Transaction:
+Transaction details:
 Merchant: {merchant}
+Merchant hint: {hint}
 Amount: {amount}
 
-Return ONLY the category name.
+Return ONLY one category name.
 """
 
     try:
@@ -47,16 +74,13 @@ Return ONLY the category name.
             temperature=0
         )
 
-        category = response.choices[0].message.content.strip().lower()
+        text = response.choices[0].message.content.strip().lower()
+
         for c in VALID_CATEGORIES:
-            if c in category:
+            if c in text:
                 return c
 
-        # Ensure valid output
-        if category not in VALID_CATEGORIES:
-            return "shopping"
-
-        return category
+        return "shopping"
 
     except Exception as e:
         print("[LLM ERROR]", e)
@@ -139,9 +163,10 @@ except Exception as e:
     print("[ERROR]", str(e))
     exit(0)
 
+
 score = sum(rewards) / len(rewards) if rewards else 0.5
 
-# validator requirement
+# ensure validator requirement: 0 < score < 1
 score = max(0.05, min(score, 0.95))
 
 print(f"[END] success=true steps={step} score={score:.2f}")
