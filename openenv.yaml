@@ -7,17 +7,20 @@ tasks:
   - name: easy
     description: classify transactions with clear merchant names
     grader:
-      type: reward
+      type: reward_average
+      score_field: reward
 
   - name: medium
     description: classify transactions with diverse merchants
     grader:
-      type: reward
+      type: reward_average
+      score_field: reward
 
   - name: hard
     description: classify transactions with ambiguous merchants
     grader:
-      type: reward
+      type: reward_average
+      score_field: reward
 
 
 observation_space:
