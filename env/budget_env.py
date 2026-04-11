@@ -91,7 +91,8 @@ class SmartBudgetEnv:
         t = self.transactions[self.step_id]
 
         hint = MERCHANT_HINTS.get(
-            t["merchant"], "unknown merchant")
+            t["merchant"], "unknown merchant"
+        )
 
         return Observation(
             merchant=t["merchant"],
@@ -107,15 +108,16 @@ class SmartBudgetEnv:
         correct = self.transactions[self.step_id]["category"]
         predicted = action.get("category", "")
 
-        reward = 0.0
-
+        # VALIDATOR SAFE REWARD VALUES
         if predicted == correct:
-            reward = 1.0
+            reward = 0.9
             self.correct += 1
+
         elif predicted in VALID_CATEGORIES:
-            reward = 0.5
+            reward = 0.6
+
         else:
-            reward = 0.1
+            reward = 0.2
 
         self.step_id += 1
 
