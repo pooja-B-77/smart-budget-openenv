@@ -61,10 +61,8 @@ MERCHANT_HINTS = {
 
 class SmartBudgetEnv:
 
-    def __init__(self):
-
-        self.task_list = ["easy", "medium", "hard"]
-        self.task_index = -1
+    def __init__(self, task="easy"):
+        self.task = task
         self.transactions = []
         self.step_id = 0
         self.correct = 0
@@ -72,11 +70,8 @@ class SmartBudgetEnv:
 
     def reset(self):
 
-        # rotate tasks each episode
-        self.task_index = (self.task_index + 1) % len(self.task_list)
-        task_name = self.task_list[self.task_index]
-
-        self.transactions = TASKS[task_name].copy()
+        # load transactions for selected task
+        self.transactions = TASKS[self.task].copy()
         random.shuffle(self.transactions)
 
         self.step_id = 0
@@ -129,7 +124,7 @@ class SmartBudgetEnv:
 
             score = self.correct / len(self.transactions)
 
-            # ensure validator requirement
+            # validator requires 0 < score < 1
             score = max(0.05, min(score, 0.95))
 
             return None, score, True

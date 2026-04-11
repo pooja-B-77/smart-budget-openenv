@@ -6,7 +6,6 @@ from env.budget_env import SmartBudgetEnv
 
 app = FastAPI()
 
-# default env
 env = SmartBudgetEnv()
 
 
@@ -15,16 +14,17 @@ class Action(BaseModel):
     reasoning: str | None = None
 
 
+VALID_TASKS = ["easy", "medium", "hard"]
+
+
 @app.post("/reset")
-def reset(task: str = "easy"):
-    """
-    Reset environment.
-    Validator can choose tasks:
-    /reset?task=easy
-    /reset?task=medium
-    /reset?task=hard
-    """
+def reset(task: str | None = None):
+
     global env
+
+    # validator may not provide task
+    if task not in VALID_TASKS:
+        task = "easy"
 
     env = SmartBudgetEnv(task=task)
 
