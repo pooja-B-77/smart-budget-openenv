@@ -7,18 +7,18 @@ BASE = "http://127.0.0.1:7860"
 
 print("[START] task=auto env=smart-budget model=llm-agent")
 
+VALID_CATEGORIES = ["shopping", "food", "transport", "entertainment"]
+TASKS = ["easy", "medium", "hard"]
+
 rewards = []
 step = 0
 
-VALID_CATEGORIES = ["shopping", "food", "transport", "entertainment"]
-
-# read hackathon proxy variables
 API_BASE = os.environ.get("API_BASE_URL")
 API_KEY = os.environ.get("API_KEY")
 
 client = None
 
-# initialize client only if variables exist
+# Initialize OpenAI client only if proxy variables exist
 if API_BASE and API_KEY:
     client = OpenAI(
         base_url=API_BASE,
@@ -28,9 +28,8 @@ if API_BASE and API_KEY:
 
 def llm_policy(merchant, amount, hint):
 
-    # fallback classifier for local testing
+    # Fallback rule-based classifier for local testing
     if client is None:
-
         m = merchant.lower()
 
         if m in ["amazon", "flipkart", "myntra", "reliancemart"]:
@@ -54,17 +53,17 @@ Choose the correct category from:
 shopping, food, transport, entertainment.
 
 Examples:
-Amazon, Flipkart, Myntra -> shopping
-Swiggy, Zomato, Dominos -> food
-Uber, Ola, Rapido -> transport
-Netflix, Spotify, PrimeVideo -> entertainment
+Amazon -> shopping
+Swiggy -> food
+Uber -> transport
+Netflix -> entertainment
 
-Transaction details:
+Transaction:
 Merchant: {merchant}
 Merchant hint: {hint}
 Amount: {amount}
 
-Return ONLY one category name.
+Return ONLY the category name.
 """
 
     try:
@@ -109,64 +108,67 @@ if not wait_for_server():
 
 try:
 
-    r = requests.post(BASE + "/reset")
+    for task in TASKS:
 
-    if r.status_code != 200:
-        print("[ERROR] reset failed")
-        exit(0)
+        print(f"[TASK] {task}")
 
-    obs = r.json()
-    done = False
+        r = requests.post(f"{BASE}/reset?task={task}")
 
-    while not done:
+        if r.status_code != 200:
+            print("[ERROR] reset failed")
+            continue
 
-        if not obs:
-            break
+        obs = r.json()
+        done = False
 
-        merchant = obs.get("merchant", "unknown")
-        amount = obs.get("amount", 0)
-        hint = obs.get("merchant_hint", "")
+        while not done:
 
-        category = llm_policy(merchant, amount, hint)
+            if not obs:
+                break
 
-        action = {
-            "category": category,
-            "reasoning": f"{merchant} transaction classification"
-        }
+            merchant = obs.get("merchant", "unknown")
+            amount = obs.get("amount", 0)
+            hint = obs.get("merchant_hint", "")
 
-        try:
-            r = requests.post(BASE + "/step", json=action)
-            data = r.json()
-        except Exception:
-            print("[ERROR] step request failed")
-            break
+            category = llm_policy(merchant, amount, hint)
 
-        reward = float(data.get("reward", 0))
-        done = bool(data.get("done", False))
+            action = {
+                "category": category,
+                "reasoning": f"{merchant} transaction classification"
+            }
 
-        rewards.append(reward)
-        step += 1
+            try:
+                r = requests.post(BASE + "/step", json=action)
+                data = r.json()
+            except Exception:
+                print("[ERROR] step request failed")
+                break
 
-        print(
-            f"[STEP] step={step} merchant={merchant} action={category} reward={reward:.2f} done={str(done).lower()}"
-        )
+            reward = float(data.get("reward", 0))
+            done = bool(data.get("done", False))
 
-        obs = data.get("state")
+            rewards.append(reward)
+            step += 1
 
-        if obs is None:
-            break
+            print(
+                f"[STEP] task={task} step={step} merchant={merchant} action={category} reward={reward:.2f} done={str(done).lower()}"
+            )
 
-        time.sleep(0.05)
+            obs = data.get("state")
+
+            if obs is None:
+                break
+
+            time.sleep(0.05)
 
 except Exception as e:
-
     print("[ERROR]", str(e))
     exit(0)
 
 
 score = sum(rewards) / len(rewards) if rewards else 0.5
 
-# ensure validator requirement: 0 < score < 1
+# Ensure validator requirement: 0 < score < 1
 score = max(0.05, min(score, 0.95))
 
 print(f"[END] success=true steps={step} score={score:.2f}")
