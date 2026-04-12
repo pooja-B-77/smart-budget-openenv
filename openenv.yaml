@@ -3,19 +3,8 @@ description: Expense classification environment for reinforcement learning agent
 
 tasks:
   - name: easy
-    description: classify transactions with clear merchant names
-    grader:
-      type: reward_average
-
   - name: medium
-    description: classify transactions with diverse merchants
-    grader:
-      type: reward_average
-
   - name: hard
-    description: classify transactions with ambiguous merchants
-    grader:
-      type: reward_average
 
 observation_space:
   merchant: string
